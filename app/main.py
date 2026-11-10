@@ -1,34 +1,49 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from app.db import get_connection
+from app.schemas import Product, ProductCreate
 
-products = [
-    {
-        "id": 1,
-        "name": "iPhone 16 256GB Blue",
-        "category": "Phones",
-        "description": "Used iPhone 16 256GB Blue",
-        "price": 623.99,
-        "stock": 2,
-    },
-    {
-        "id": 2,
-        "name": "MacBook Air",
-        "category": "Laptops",
-        "description": "Used MacBook Air 16/256GB Space Grey",
-        "stock": 5,
-        "price": 528.99
-    },
-    {
-        "id": 3,
-        "name": "iPhone Duo",
-        "category": "Phones",
-        "description": "Brand new first fold phone by Apple!",
-        "stock": 10,
-        "price": 2319.99
-    }
-]
+import uvicorn
+from dotenv import load_dotenv
 
-@app.get("/products")
-def get_products():
-    return products
+load_dotenv()
+
+app = FastAPI(title="OrderOps API")
+
+
+@app.get("/products", response_model=list[Product])
+async def get_products():
+    async with await get_connection() as conn:
+        cursor = await conn.execute(
+            "SELECT * FROM products ORDER BY id"
+        )
+        return await cursor.fetchall()
+
+
+@app.post("/products", response_model=Product, status_code=201)
+async def create_product(product: ProductCreate):
+    async with await get_connection() as conn:
+        cursor = await conn.execute(
+            """
+            INSERT INTO products
+                (name, category, description, price, stock)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING *
+            """,
+            (
+                product.name,
+                product.category,
+                product.description,
+                product.price,
+                product.stock,
+            ),
+        )
+        return await cursor.fetchone()
+
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "app.main:app",
+        host="127.0.0.1",
+        port=8000
+    )

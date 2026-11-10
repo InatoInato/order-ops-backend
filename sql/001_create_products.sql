@@ -1,0 +1,9 @@
+
+CREATE TABLE IF NOT EXISTS products (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    price NUMERIC(10, 2) NOT NULL CHECK (price > 0),
+    stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0)
+);
