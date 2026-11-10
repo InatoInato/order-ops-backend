@@ -15,6 +15,7 @@ class ProductCreate(BaseModel):
 class Product(ProductCreate):
     id: int
 
+
 class ProductUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=50)
     category: str | None = Field(default=None, min_length=1, max_length=20)
