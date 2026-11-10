@@ -1,11 +1,18 @@
-FROM python:3.12-slim
+FROM python:3.14-slim
+
+COPY --from=docker.io/astral/uv:0.13.7 /uv /uvx /bin/
 
 WORKDIR /app
 
-COPY requirements.txt .
+ENV UV_NO_DEV=1
+ENV UV_PYTHON_DOWNLOADS=0
 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml uv.lock ./
 
-COPY ./app ./app
+RUN uv sync --locked --no-install-project
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+COPY app ./app
+
+EXPOSE 8000
+
+CMD ["uv", "run", "--no-sync", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

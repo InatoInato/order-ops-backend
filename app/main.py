@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from psycopg import sql
 
 from app.db import get_connection
-from app.schemas import Product, ProductCreate
+from app.schemas import Product, ProductCreate, ProductUpdate
 
 import uvicorn
 from dotenv import load_dotenv
@@ -39,6 +40,34 @@ async def create_product(product: ProductCreate):
             ),
         )
         return await cursor.fetchone()
+
+@app.patch("/products/{product_id}", response_model=Product)
+async def update_product(product_id: int, changes: ProductUpdate):
+    data = changes.model_dump(exclude_unset=True)
+
+    if not data or any(value is None for value in data.values()):
+        raise HTTPException(422, "Provide at least one non-null field")
+
+    fields = sql.SQL(", ").join(
+        sql.SQL("{} = %s").format(sql.Identifier(key))
+        for key in data
+    )
+
+    query = sql.SQL(
+        "UPDATE products SET {} WHERE id = %s RETURNING *"
+    ).format(fields)
+
+    async with await get_connection() as conn:
+        cursor = await conn.execute(
+            query,
+            [*data.values(), product_id],
+        )
+        product = await cursor.fetchone()
+
+    if product is None:
+        raise HTTPException(404, "Product not found")
+
+    return product
 
 
 if __name__ == "__main__":

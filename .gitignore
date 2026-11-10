@@ -1,31 +1,8 @@
-# Python
-__pycache__/
-*.py[cod]
 .venv/
-*.egg-info/
-
-# Environment variables / secrets
 .env
 .env.*
-!.env.example
-
-# PyCharm / VS Code
+.git/
 .idea/
-.vscode/
-
-# Testing and linting
+__pycache__/
+*.pyc
 .pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.coverage
-htmlcov/
-
-# macOS
-.DS_Store
-
-# Logs
-*.log
-
-# Local database files
-*.db
-*.sqlite3
